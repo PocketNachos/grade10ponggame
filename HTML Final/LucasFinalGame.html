@@ -1,0 +1,398 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>Lucas' Game</title>
+    <style>
+        canvas {
+            border: blanchedalmond 10px ridge;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
+        }
+
+        p {
+            font-family: "Comic Sans MS", Comic Sans MS;
+            font-size: 30px;
+            color: orange;
+        }
+    </style>
+</head>
+
+<body>
+    <!--800x600 resolution-->
+    <canvas id="Juego" width="800" height="600"></canvas>
+
+    <!--controls-->
+    <p> W,S = P1 UP and DOWN</p>
+    <p> I,K = P2 UP and DOWN</p>
+    <p> X,M = P1 & P2 SPEEDUP</p>
+
+    <!--BRAIN POWERRRR (flawlessly on firefox, blaming chrome)-->
+    <audio id="music" autoplay="true" src="sounds/music.mp3"></audio>
+
+    <script>
+        // get the canvas element to use 
+        var canvas = document.getElementById("Juego");
+        var ctx = canvas.getContext("2d");
+        var canvasWidth = canvas.width;
+        var canvasHeight = canvas.height;
+
+        let audio = document.getElementById('music')
+        audio.volume = 0.1
+
+        //p1
+        var p1rightPressed = false;
+        var p1leftPressed = false;
+        var p1upPressed = false;
+        var p1downPressed = false;
+
+        //p2
+        var p2rightPressed = false;
+        var p2leftPressed = false;
+        var p2upPressed = false;
+        var p2downPressed = false;
+        var p1speedup = false;
+        var p2speedup = false;
+        var ran = true;
+
+        //Scores for the players
+        var p1Score = 0;
+        var p2Score = 0;
+        // add something to "listen" for an event
+        //an event is keypress, mouse movement, mouse click etc.
+        document.addEventListener("keydown", keyDownHandler, false);
+        document.addEventListener("keyup", keyUpHandler, false);
+
+
+
+        //Player1 controls, commendented out right and left
+        //incase I want to use them for power ups later
+
+        //if the key is pressed down
+        function keyDownHandler(e) {
+            if (e.keyCode == 87) {
+                p1upPressed = true;
+            } else if (e.keyCode == 83) {
+                p1downPressed = true
+            } else if (e.keyCode == 73) {
+                p2upPressed = true;
+            } else if (e.keyCode == 75) {
+                p2downPressed = true;
+            } else if (e.keyCode == 88) {
+                p1speed = 20;
+            } else if (e.keyCode == 77) {
+                p2speed = 20;
+            }
+        }
+
+        //if the key is pressed up
+        function keyUpHandler(e) {
+            if (e.keyCode == 87) {
+                p1upPressed = false;
+            } else if (e.keyCode == 83) {
+                p1downPressed = false;
+            } else if (e.keyCode == 73) {
+                p2upPressed = false;
+            } else if (e.keyCode == 75) {
+                p2downPressed = false;
+            } else if (e.keyCode == 88) {
+                p1speed = 6;
+            } else if (e.keyCode == 77) {
+                p2speed = 6;
+            }
+        }
+
+        // draws a rectangle
+        function rectangle(x, y, w, h, c) {
+            ctx.beginPath();
+            ctx.rect(x, y, w, h);
+            ctx.fillStyle = c;
+            ctx.fill()
+            ctx.closePath();
+        }
+
+        //punto means point in spanish, I typed this in quickly at the time
+        function getPuntoP1() {
+            if (bx < (0)) {
+
+                p2Score = p2Score + 1;
+            }
+        }
+
+
+        function getPuntoP2() {
+            if (bx > (700)) {
+
+                p1Score = p1Score + 1;
+            }
+        }
+
+        //Shows P1 score on the screen
+        function displayScoreP1() {
+            ctx.font = "30px Comic Sans MS";
+            ctx.fillStyle = 'black';
+            var livesStr = "P1Score: " + p1Score;
+            ctx.fillText(livesStr, 10, 40);
+        }
+
+        //Shows P2 score on the screen
+        function displayScoreP2() {
+            ctx.font = "30px Comic Sans MS";
+            ctx.fillStyle = 'black';
+            var livesStr = "P2Score: " + p2Score;
+            ctx.fillText(livesStr, 630, 40);
+        }
+
+        //p1
+        p1rectWidth = 30;
+        p1rectHeight = 90;
+        var p1x = 25; 
+        var p1y = 100;
+        var p1dx = 0;
+        var p1dy = 0;
+        var p1speed = 10;
+
+        //p2
+        p2rectWidth = 30;
+        p2rectHeight = 90;
+        var p2x = 750;
+        var p2y = 100; 
+        var p2dx = 0;
+        var p2dy = 0;
+        var p2speed = 10;
+
+        //ball
+        bx = 200;
+        by = 230;
+        bspeed = 4.5;
+        bdx = bspeed - 1;
+        bdy = bspeed;
+
+        //var for background
+        var bgReady = false;
+        var bgImage = new Image();
+        bgImage.onload = function () {
+            bgReady = true;
+        };
+        bgImage.src = "images/bg.png";
+
+        //Drawing Ball Image
+        var ballReady = false;
+        var ballImage = new Image();
+        ballImage.onload = function () {
+            ballReady = true;
+        };
+        ballImage.src = "images/ball.png";
+
+        //After scored on, changes the ball pos
+        function p2ResetBall() {
+            if (bx > (700)) {
+
+                bx = 450;
+                bx = 550;
+
+            }
+        }
+        function p1ResetBall() {
+            if (bx < (0)) {
+
+                bx = 250;
+                bx = 175;
+
+            }
+        }
+
+        //Math.abs makes the ball collide with the paddle at an absolute value instead of it being what it normally is set to. (x value is absolute)
+        function p1Collide() {
+            if (bx <= p1x + p1rectWidth) {
+
+                if (by + ballImage.height / 2 >= p1y) {
+                    if (by + ballImage.height / 2 < p1y + p1rectHeight) {
+                        bdx = Math.abs(bdx);
+                        bdy = -bdy;
+
+                    }
+                }
+            }
+        }
+        function p2Collide() {
+
+            if (bx + ballImage.width >= p2x) {
+
+                if (by + ballImage.height / 2 <= p2y + p2rectHeight && by + ballImage.height / 2 >= p2y) {
+                    console.log(ballImage.height)
+
+                    bdx = -Math.abs(bdx);
+                    bdy = -bdy;
+                }
+            }
+        }
+
+        //after someone gets a certain amount of score, this function runs 
+        function reset() {
+            p1Score = 0;
+            p2Score = 0;
+            p1upPressed = false;
+            p1downPressed = false;
+            p2upPressed = false;
+            p2downPressed = false;
+            p1speed = 10;
+            p2speed = 10;
+            bdx = -bdx;
+            bdy = -bdy;
+            bspeed = 4.5;
+            bx = 200;
+            by = 230;
+            bdx = bspeed - 1;
+            bdy = bspeed;
+            ran = true;
+        }
+
+        //once the game hits a certain score, the ball speeds up
+        function ballSpeed() {
+            if (p2Score == 5 && ran || p1Score == 5 && ran) {
+
+                bspeed = 6.5;
+                bdx = bspeed - 1;
+                bdy = bspeed;
+                ran = false
+            }
+        }
+
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            //this is basically why the ball combos and why this game is really fast. 
+            //once the ball hits the side, it then spawns close to the edge of it.
+            p1ResetBall();
+            p2ResetBall();
+
+            //ball collision with the y values of the canvas
+            if (by <= 0) {
+                bdy = Math.abs(bdy);
+            }
+            else if (by >= canvasHeight - ballImage.height) {
+                bdy = -Math.abs(bdy);
+            }
+
+            // code to stop movement if no keys are pressed for both p1 & p2
+            if (p1rightPressed == false && p1leftPressed == false && p1upPressed == false && p1downPressed == false) {
+                p1dx = 0;
+                p1dy = 0;
+            }
+
+            if (p2rightPressed == false && p2leftPressed == false && p2upPressed == false && p2downPressed == false) {
+                p2dx = 0;
+                p2dy = 0;
+            }
+
+            //p1
+            if (p1rightPressed == true) {
+                p1dx = p1speed;
+            } else if (p1leftPressed == true) {
+                p1dx = -p1speed;
+            } else if (p1upPressed == true) {
+                p1dy = -p1speed;
+            } else if (p1downPressed == true) {
+                p1dy = p1speed
+            }
+
+            //p2
+            if (p2rightPressed == true) {
+                p2dx = p2speed;
+            } else if (p2leftPressed == true) {
+                p2dx = -p2speed;
+            } else if (p2upPressed == true) {
+                p2dy = -p2speed;
+            } else if (p2downPressed == true) {
+                p2dy = p2speed
+            }
+
+            // code to keep p1 rectangle on the canvas
+            if (p1x > canvasWidth - p1rectWidth) {
+                p1x = canvasWidth - p1rectWidth;
+            } else if (p1x < 0) {
+                p1x = 0;
+            } else if (p1y > canvasHeight - p1rectHeight) {
+                p1y = canvasHeight - p1rectHeight;
+            } else if (p1y < 0) {
+                p1y = 0;
+            }
+
+
+            // code to keep p1 rectangle on the canvas
+            if (p2x > canvasWidth - p2rectWidth) {
+                p2x = canvasWidth - p2rectWidth;
+            } else if (p2x < 0) {
+                p2x = 0;
+            } else if (p2y > canvasHeight - p2rectHeight) {
+                p2y = canvasHeight - p2rectHeight;
+            } else if (p2y < 0) {
+                p2y = 0;
+            }
+
+            // code that changes the position of p1 rectangle
+            // based on the p1dx and p1dy
+            p1x = p1x + p1dx;
+            p1y = p1y + p1dy;
+
+            p2x = p2x + p2dx;
+            p2y = p2y + p2dy;
+
+            bx = bx + bdx;
+            by = by + bdy;
+
+            //loading images
+            if (bgReady) {
+                ctx.drawImage(bgImage, 0, 0);
+            }
+
+            if (ballReady) {
+                ctx.drawImage(ballImage, bx, by);
+            }
+
+            //me troubleshoting
+            //console.log(bspeed)
+
+            //my farm of function calling ;))
+            //this is a nice farm 
+            //very much good
+            ballSpeed();
+
+            p1Collide();
+            p2Collide();
+
+            getPuntoP1();
+            getPuntoP2();
+
+            displayScoreP1();
+            displayScoreP2();
+
+            //draw the two rectangles
+            rectangle(p1x, p1y, p1rectWidth, p1rectHeight, 'yellow');
+            rectangle(p2x, p2y, p2rectWidth, p2rectHeight, 'red');
+
+            //Alerts once game hits score of 30 and then calls reset function
+            if (p1Score == 30) {
+                alert("Player 1 Wins!");
+                reset();
+            }
+
+            if (p2Score == 30) {
+                alert("Player 2 Wins!");
+                reset();
+            }
+
+        }
+        setInterval(draw, 10);
+
+    </script>
+
+</body>
+
+</html>
